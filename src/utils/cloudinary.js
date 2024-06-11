@@ -1,4 +1,5 @@
-import {v2 as cloudinary} from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -15,19 +16,19 @@ cloudinary.config({
 // Here we will do step 1,2 and 3.
 
 const uploadOnCloudinary = async (filePath) => {
-    try{
-        if(!filePath) return null
+    try {
+        if (!filePath) return null
 
         const response = await cloudinary.uploader.upload(filePath, {
             resource_type: "auto", //Automatically detect file type
         })
-        console.log("File is now uploaded to cloudinary.",response.url)
+        console.log("File is now uploaded to cloudinary.", response.url)
 
         //Here we will unlink the file to avoid memory leaks. Since the file is now uploaded to cloudinary we will not need it any more.
-       // fs.unlinkSync(localFilePath)
+       // fs.unlinkSync(filePath);
         return response;
     }
-    catch(error){
+    catch (error) {
         //Here we will unlink the filepath to avoid memory leaks.
         fs.unlinkSync(filePath);
         console.log(error);
@@ -35,4 +36,4 @@ const uploadOnCloudinary = async (filePath) => {
     }
 }
 
-export {uploadOnCloudinary}
+export { uploadOnCloudinary }
