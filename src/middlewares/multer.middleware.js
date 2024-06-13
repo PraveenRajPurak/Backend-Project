@@ -8,6 +8,8 @@ const storage = multer.diskStorage({
       cb(null, file.originalname)
     }
   })
+
+  //Uploads file to temp folder(disk storage) and returns the path of the file
   
 const upload = multer({ 
     storage,
