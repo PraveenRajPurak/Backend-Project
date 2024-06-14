@@ -520,7 +520,9 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateAvatar,
-    updateCoverImage
+    updateCoverImage,
+    showuserProfile,
+    showWatchHistory
 
 }
 
