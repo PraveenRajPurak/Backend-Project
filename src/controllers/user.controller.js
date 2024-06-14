@@ -366,6 +366,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
 
     
 })
+
 export {
     registerUser,
     loginUser,
@@ -376,7 +377,6 @@ export {
     updateAccountDetails,
     updateAvatar,
     updateCoverImage
-
 
 }
 
