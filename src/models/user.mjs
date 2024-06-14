@@ -37,7 +37,7 @@ const userSchema = new Schema({
     },
     watchHistory: [
         {
-            type: Schema.Types.ObjectId,
+            type: Schema.Types.ObjectId,  // We are storing the id of the video in the watch history. 
             ref: "Video",
         }
     ],

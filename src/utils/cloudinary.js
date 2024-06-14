@@ -25,7 +25,7 @@ const uploadOnCloudinary = async (filePath) => {
         console.log("File is now uploaded to cloudinary.", response.url)
 
         //Here we will unlink the file to avoid memory leaks. Since the file is now uploaded to cloudinary we will not need it any more.
-       // fs.unlinkSync(filePath);
+        fs.unlinkSync(filePath);
         return response;
     }
     catch (error) {

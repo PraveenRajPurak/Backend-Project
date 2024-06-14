@@ -32,21 +32,19 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 
-router.route("/logout").post(
-    verifyToken,
-    logoutUser);
+router.route("/logout").post(verifyToken, logoutUser);
 
-router.route("/refreshAccessToken").post(refreshAccessToken);
+router.route("/refresh-Access-Token").post(refreshAccessToken);
 
-router.route("/hangeCurrentPassword").post(verifyToken, changeCurrentPassword);
+router.route("/change-Current-Password").post(verifyToken, changeCurrentPassword);
 
-router.route("/getCurrentUser").get(verifyToken, getCurrentUser);
+router.route("/get-CurrentUser").get(verifyToken, getCurrentUser);
 
-router.route("/updateAccountDetails").post(verifyToken, updateAccountDetails);
+router.route("/update-AccountDetails").patch(verifyToken, updateAccountDetails);
 
-router.route("/updateAvatar").post(verifyToken, upload.single("avatar"), updateAvatar);
+router.route("/update--Avatar").patch(verifyToken, upload.single("avatar"), updateAvatar);
 
-router.route("/updateCoverImage").post(verifyToken, upload.single("coverImage"), updateCoverImage);
+router.route("/update-CoverImage").patch(verifyToken, upload.single("coverImage"), updateCoverImage);
 
 
 export default router;

@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.mjs";
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 const generateAccessAndRefressToken = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -252,14 +253,14 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
     if (!validPassword) {
         throw new ApiError(400, "Invalid current password");
-    }   
+    }
 
     user.password = newPassword;
     await user.save({ validateBeforeSave: false });
 
     return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Password changed successfully"));
+        .status(200)
+        .json(new ApiResponse(200, {}, "Password changed successfully"));
 
 })
 
@@ -272,10 +273,10 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 })
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-    
-    const {fullname, email} = req.body;
 
-    if(!fullname || !email){
+    const { fullname, email } = req.body;
+
+    if (!fullname || !email) {
         throw new ApiError(400, "All fields are required");
     }
 
@@ -287,19 +288,19 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
     const updateduser = await User.findByIdAndUpdate(user._id,
         {
-            $set :{
+            $set: {
                 fullname,
                 email
             }
         },
         {
-            new : true
+            new: true
         }
     ).select("-password")
 
     return res
-    .status(200)
-    .json(new ApiResponse(200, updateduser , "Account details updated successfully."))
+        .status(200)
+        .json(new ApiResponse(200, updateduser, "Account details updated successfully."))
 
 })
 
@@ -307,64 +308,207 @@ const updateAvatar = asyncHandler(async (req, res) => {
 
     const avatarImagePath = req.file?.path
 
-    if(!avatarImagePath){
+    if (!avatarImagePath) {
         throw new ApiError(400, "Avatar image path not found");
     }
 
     const avatar = await uploadOnCloudinary(avatarImagePath)
 
-    if(!avatar.url){
+    if (!avatar.url) {
         throw new ApiError(400, "Avatar not uploaded on Cloudinary");
     }
 
-   const user = User.findByIdAndUpdate(
-    req.user._id,
-    {
-        $set : {
-            avatar : avatar.url
+    const user = User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                avatar: avatar.url
+            }
+        },
+        {
+            new: true
         }
-    },
-    {
-        new : true
-    }
-   ) 
+    )
 
-   return res.status(200)
-   .json(new ApiResponse(200, user, "Avatar updated successfully."))
+    return res.status(200)
+        .json(new ApiResponse(200, user, "Avatar updated successfully."))
 
-    
+
 })
 
 const updateCoverImage = asyncHandler(async (req, res) => {
 
     const CoverImagePath = req.file?.path
 
-    if(!CoverImagePath){
+    if (!CoverImagePath) {
         throw new ApiError(400, "Cover image path not found");
     }
 
     const coverImage = await uploadOnCloudinary(CoverImagePath)
 
-    if(!coverImage.url){
+    if (!coverImage.url) {
         throw new ApiError(400, "Cover Image not uploaded on Cloudinary");
     }
 
-   const user = User.findByIdAndUpdate(
-    req.user._id,
-    {
-        $set : {
-            coverImage : coverImage.url
+    const user = User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                coverImage: coverImage.url
+            }
+        },
+        {
+            new: true
         }
-    },
-    {
-        new : true
+    )
+
+    return res.status(200)
+        .json(new ApiResponse(200, user, "Avatar updated successfully."))
+
+
+})
+
+const showuserProfile = asyncHandler(async (req, res) => {
+
+    const { username } = req.params;
+
+    if (!username) {
+        throw new ApiError(400, "Username not found");
     }
-   ) 
 
-   return res.status(200)
-   .json(new ApiResponse(200, user, "Avatar updated successfully."))
+    const userProfile = User.aggregate([
+        {
+            $match: {
+                username: username?.toLowerCase()
+            }
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "channel",
+                as: "Subscribers"
+            } // In this stage, we look for subscription models where user is a channel.
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscriberTo"
+            }   // In this stage, we look for subscription models where user is a subscriber.
+        },
+        {
+            $addFields: {
+                subcriberCount: {
+                    $size: "$Subscribers"
+                },
+                userSubscriptionsCount: {
+                    $size: "$subscriberTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {
+                            $in: [req.user?._id, "$subscribers.subscriber"]
+                        },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+                avatar: 1,
+                coverImage: 1,
+                email: 1
 
+            }
+        }])
+
+    //I got terribly confused about the concept of aggregation pipeline.
+    //Then i studied it in depth and found out how it works.
+    //Actually lookups work independant of each other.
+    //Later stages like addFields and project can work on the result of previous stages.
+    //So in future if we are required to query collections in depth, we can use aggregation pipeline.
+    //First we may use match to shorten the number of docs to look for.
+    //Then we can use lookup to perform join operations.
+    //Then we can add results of special operations (carried out using the various operation methods) using addField operation.
+   
+    // **IMPORTANT : aggregation always returns array and mostly we'd require only one document.**
+   
+    if (!userProfile?.length) {
+        throw new ApiError(400, "User not found");
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, userProfile[0], "User profile fetched successfully.")
+        )
+
+})
+
+const showWatchHistory = asyncHandler(async (req, res) => {
     
+    const user = await User.aggregate(
+        [
+            {
+                $match: {
+                    _id: mongoose.Types.ObjectId(req.user._id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "videos",
+                    localField: "watchHistory",
+                    foreignField: "_id",
+                    as: "watchHistory",
+                    pipeline:[
+                        {
+                            $lookup : {
+                                from : "users",
+                                localField : "owner",
+                                foreignField : "_id",
+                                as : "owner",
+                                pipeline : [
+                                    {
+                                        $project : {
+                                            _id : 1,
+                                            fullName: 1,
+                                            avatar : 1,
+
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            $addFields : {
+                                owner : {
+                                    $first : "$owner"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+
+        ]
+    )
+
+    if (!user?.length) {
+        throw new ApiError(400, "User not found");
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, user[0], "Watch History fetched successfully."))
 })
 
 export {
