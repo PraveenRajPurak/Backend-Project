@@ -8,6 +8,8 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 const getChannelStats = asyncHandler(async (req, res) => {
 
+    // TODO: Get the channel stats like total video views, total subscribers, total videos, total likes etc.
+
     const {username} = req.params
 
     if(!username){
@@ -48,7 +50,15 @@ const getChannelStats = asyncHandler(async (req, res) => {
                         from : "likes",
                         localField : "_id",
                         foreignField : "video",
-                        as : "likes"
+                        as : "likes",
+                        pipeline : [
+                            {
+                                $addFields : {
+                                    likesCount : {
+                                        $size : "$likes"}
+                                }
+                            }
+                        ]
                     }
                 }
                ]
@@ -56,7 +66,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
         }
         
     ])
-    // TODO: Get the channel stats like total video views, total subscribers, total videos, total likes etc.
+    
 })
 
 const getChannelVideos = asyncHandler(async (req, res) => {
