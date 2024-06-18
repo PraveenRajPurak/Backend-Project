@@ -482,7 +482,6 @@ const showWatchHistory = asyncHandler(async (req, res) => {
                                             _id : 1,
                                             fullName: 1,
                                             avatar : 1,
-
                                         }
                                     }
                                 ]
