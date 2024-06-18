@@ -1,6 +1,6 @@
 import mongoose, {isValidObjectId} from "mongoose"
-import {Video} from "../models/video.model.js"
-import {User} from "../models/user.model.js"
+import {Video} from "../models/video.mjs"
+import {User} from "../models/user.mjs"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
@@ -14,8 +14,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description} = req.body
+    
+    console.log("Title : ", title);
+    console.log("Description : ", description);
 
-    const videoFilePath = req.file?.videoFile[0].path
+
+    const videoFilePath = req.files?.videoFile[0]?.path
+
+    console.log("Video File Path : ", videoFilePath);
 
     const user = req.user._id
 
@@ -23,7 +29,13 @@ const publishAVideo = asyncHandler(async (req, res) => {
         throw new ApiError("Please upload a video", 400)
     }
 
-    const thumbnailPath = req.file?.thumbnailFile[0].path
+    const thumbnailPath = req.files?.thumbnail[0]?.path
+
+    console.log("Thumbnail Path : ", thumbnailPath);
+
+    if(!thumbnailPath) {
+        throw new ApiError("Please upload a thumbnail", 400)
+    }
 
     const video = await uploadOnCloudinary(videoFilePath)
 
@@ -42,7 +54,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
         thumbnail : thumbnail.url,
         owner : user,
         title,
-        description
+        description,
+        duration : 0,
     })
 
     if(!newVideo) {
@@ -137,7 +150,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     if(!publishStatus) {
         throw new ApiError("Failed to toggle publish status", 400)
     }
-    
+
     res
     .status(200)
     .json(

@@ -7,36 +7,46 @@ import {
     togglePublishStatus,
     updateVideo,
 } from "../controllers/video.controller.js"
-import {verifyJWT} from "../middlewares/auth.middleware.js"
-import {upload} from "../middlewares/multer.middleware.js"
+import {verifyToken} from "../middlewares/auth.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js"
 
 const router = Router();
-router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
+
+router.use(verifyToken); // Apply verifyJWT middleware to all routes in this file
+
+
+router.route("/publishVideo").post(
+    verifyToken,
+    upload.fields([
+        {
+            name: "videoFile",
+            maxCount: 1,
+        },
+        {
+            name: "thumbnail",
+            maxCount: 1,
+        },
+
+    ]), publishAVideo);
 
 router
-    .route("/")
-    .get(getAllVideos)
-    .post(
-        upload.fields([
-            {
-                name: "videoFile",
-                maxCount: 1,
-            },
-            {
-                name: "thumbnail",
-                maxCount: 1,
-            },
-            
-        ]),
-        publishAVideo
-    );
+    .route("/getAllVideos")
+    .get(verifyToken,getAllVideos)
+    ;
 
 router
-    .route("/:videoId")
-    .get(getVideoById)
-    .delete(deleteVideo)
-    .patch(upload.single("thumbnail"), updateVideo);
+    .route("/getVideo/:videoId")
+    .get(verifyToken,getVideoById)
+    ;
 
-router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
+router.route("/deleteVideo/:videoId")
+    .delete(verifyToken,deleteVideo)
+    ;
 
-export default router
+router
+    .route("/updateVideo/:videoId")
+    .patch(verifyToken,upload.single("thumbnail"), updateVideo);
+
+router.route("/toggle/publish/:videoId").patch(verifyToken, togglePublishStatus);
+
+export default router;
