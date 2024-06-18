@@ -91,22 +91,33 @@ const getVideoById = asyncHandler(async (req, res) => {
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: update video details like title, description, thumbnail
+    const { title, description} = req.body
 
-    const video = await Video.aggregate([
+    const thumbnailPath = req.file?.path
+
+    if(!thumbnailPath) {
+        throw new ApiError("Please upload a thumbnail", 400)
+    }
+
+    const thumbnail = await uploadOnCloudinary(thumbnailPath)
+
+    if(!thumbnail) {
+        throw new ApiError("Failed to upload thumbnail on Cloudinary", 400)
+    }
+
+    const video = await Video.findByIdAndUpdate(
+        new mongoose.Types.ObjectId(videoId),
         {
-            $match: {
-                _id: new mongoose.Types.ObjectId(videoId)
+            $set : {
+                title,
+                description,
+                thumbnail : thumbnail.url
             }
         },
         {
-            $project :{
-                _id : 0,
-                title : 1,
-                description : 1,
-                thumbnail : 1
-            }
+            new : true
         }
-    ])
+    )
 
     if (!video) {
         throw new ApiError("Video not found", 404)
@@ -135,11 +146,19 @@ const deleteVideo = asyncHandler(async (req, res) => {
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
 
+    const currentStatus = await Video.findById(videoId)
+
+    if(!currentStatus) {
+        throw new ApiError("Video not found", 404)
+    }
+
+    const publish = currentStatus.isPublished
+
     const publishStatus = await Video.findByIdAndUpdate(
         videoId,
         {
             $set : {
-                isPublished : !isPublished
+                isPublished : !publish
             }
         },
         {

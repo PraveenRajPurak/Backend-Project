@@ -44,7 +44,7 @@ router.route("/deleteVideo/:videoId")
     ;
 
 router
-    .route("/updateVideo/:videoId")
+    .route("/update-Video/:videoId")
     .patch(verifyToken,upload.single("thumbnail"), updateVideo);
 
 router.route("/toggle/publish/:videoId").patch(verifyToken, togglePublishStatus);
