@@ -8,11 +8,11 @@ import {
 import {verifyToken} from "../middlewares/auth.middleware.js"
 
 const router = Router();
-router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
+router.use(verifyToken); // Apply verifyJWT middleware to all routes in this file
 
 router.route("/toggle/video-like-toggle/:videoId").post(verifyToken, toggleVideoLike);
 router.route("/toggle/c/:commentId").post(toggleCommentLike);
 router.route("/toggle/t/:tweetId").post(toggleTweetLike);
-router.route("/videos").get(getLikedVideos);
+router.route("/liked-videos").get(getLikedVideos);
 
 export default router
