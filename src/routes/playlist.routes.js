@@ -8,14 +8,14 @@ import {
     removeVideoFromPlaylist,
     updatePlaylist,
 } from "../controllers/playlist.controller.js"
-import {verifyToken} from "../middlewares/auth.middleware.js"
+import { verifyToken } from "../middlewares/auth.middleware.js"
 
 const router = Router();
 
 router.use(verifyToken); // Apply verifyJWT middleware to all routes in this file
 
 router.route("/create-playlist").post(
-    verifyToken,createPlaylist)
+    verifyToken, createPlaylist)
 
 router
     .route("/get-playlist/:playlistId")
@@ -23,12 +23,12 @@ router
         verifyToken,
         getPlaylistById);
 
-    router
+router
     .route("/update-playlist/:playlistId")
     .patch(
         verifyToken, updatePlaylist);
 
-    router
+router
     .route("/delete-playlist/:playlistId")
     .delete(
         verifyToken, deletePlaylist);

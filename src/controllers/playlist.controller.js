@@ -55,8 +55,7 @@ const getPlaylistById = asyncHandler(async (req, res) => {
         throw new ApiError("Playlist not found", 404)
     }
 
-    return 
-    res.status(200)
+    return res.status(200)
     .json(
         new ApiResponse(200, playlist, "Playlist successfully fetched")
     )
@@ -116,13 +115,17 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
         throw new ApiError("Video does not exist in playlist", 400)
     }
 
-    playlist.videos = playlist.videos.filter(video => video !== videoId)
+    const videoRemoval = playlist.videos.pull(videoId)
     await playlist.save()
+
+    if(!videoRemoval) {
+        throw new ApiError("Video could not be removed from playlist", 400)
+    }
 
     return res
     .status(200)
     .json(
-        new ApiResponse(200, playlist, "Video successfully removed from playlist")
+        new ApiResponse(200,videoRemoval, "Video successfully removed from playlist")
     )
 
 })
