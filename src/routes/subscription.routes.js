@@ -18,7 +18,7 @@ router
     .post(verifyToken, toggleSubscription);
 
 router
-    .route("/user-channel-subscribers/:subscriberId")
+    .route("/user-channel-subscribers/:channelId")
     .get(verifyToken, getUserChannelSubscribers);
 
 export default router

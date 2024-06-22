@@ -52,10 +52,16 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const { channelId } = req.params
 
+    if(!isValidObjectId(channelId)) {
+        throw new ApiError("Invalid channel id", 400)
+    }
+
+    console.log("Channel Id : ", channelId);
+
     const ChannelSubscribers = await Subscription.aggregate([
         {
             $match: {
-                channel: channelId
+                channel: new mongoose.Types.ObjectId(channelId)
             }
         },
         {
@@ -75,8 +81,27 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
                     }
                 ]
             }
+        },
+        {
+            $unwind : "$subscriber"
+        },
+        {
+            $group : {
+                _id : "$channel",
+                subscribers : { $push : "$subscriber" }
+            } //Proves how big of an asset group operation is. If it would not be there, we'd be getting list of
+              // subscription instances with subscriber named field with subscriber information. It would have been a really bad way of handling the task. But group came in the way to save us.
+        },
+        {
+            $project : {
+                _id : 0,
+                channel : "$_id",
+                subscribers : 1
+            }
         }
     ])
+
+    console.log("Channel Subscribers : ", ChannelSubscribers);
 
     if (!ChannelSubscribers) {
         throw new ApiError("Error in fetching subscribers information.", 400);
@@ -96,7 +121,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     const ChannelsSubscribedTo = await Subscription.aggregate([
         {
             $match: {
-                subcriber: subscriberId
+                subscriber: new mongoose.Types.ObjectId(subscriberId)
             }
         },
         {
@@ -113,17 +138,25 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
                             fullname: 1,
                             coverImage: 1,
                             avatar: 1,
-
                         }
                     }
                 ]
             }
         },
         {
-            $addFields: {
-                subscribedToCount: {
-                    $size: $Channels
-                }
+            $unwind : "$Channels"
+        },
+        {
+            $group : {
+                _id : "$subscriber",
+                channels : { $push : "$Channels" }
+            }
+        },
+        {
+            $project : {
+                _id : 0,
+                subscriber : "$_id",
+                channels : 1
             }
         }
     ])
