@@ -1,7 +1,8 @@
 import mongoose from "mongoose"
-import { Video } from "../models/video.model.js"
-import { Subscription } from "../models/subscription.model.js"
-import { Like } from "../models/like.model.js"
+import { Video } from "../models/video.mjs"
+import { Subscription } from "../models/subscription.mjs"
+import { Like } from "../models/like.mjs"
+import { User } from "../models/user.mjs"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
@@ -15,6 +16,8 @@ const getChannelStats = asyncHandler(async (req, res) => {
     if (!username) {
         throw new ApiError("Username is required", 400)
     }
+
+
 
     const info = await User.aggregate([
         {
@@ -49,56 +52,26 @@ const getChannelStats = asyncHandler(async (req, res) => {
             $addFields: {
                 videosCount: {
                     $size: "$videos"
+                },
+                totalViews: {
+                    $sum: "$videos.views"
                 }
             }
         },
         {
             $lookup: {
-                from: "videos",
-                localField: "_id",
-                foreignField: "owner",
-                as: "videos",
-                pipeline: [
-                    {
-                        $lookup: {
-                            from: "likes",
-                            localField: "_id",
-                            foreignField: "video",
-                            as: "likes",
-                        }
-                    },
-                    {
-                        $addFields : {
-                            likesCount : { $size : "$likes"}
-                        }
-                    },
-                    {
-                        $project : {
-                            _id : 0,
-                            likesCount : 1
-                        }
-                    }
-                ]
-            }
-        },
-
-        {
-            $lookup : {
-                from : "videos",
-                localField : "_id",
-                foreignField : "owner",
-                as : "videos"
+                from: "likes",
+                localField: "videos._id",
+                foreignField: "video",
+                as: "videoLikes"
             }
         },
         {
-            $unwind : "$videos"
+            $addFields: {
+                "likesCount": { $size: "$videoLikes" }
+            }
         },
         {
-            $group : {
-                _id : "$_id",
-                totalViews : { $sum : "$videos.views"},
-            }
-        },{
             $project : {
                 _id : 1,
                 fullname: 1,
@@ -112,6 +85,13 @@ const getChannelStats = asyncHandler(async (req, res) => {
             }
         }
     ])
+
+    console.log("Info : ", info[0]);
+
+    if(!info) {
+        throw new ApiError("Channel not found", 404)
+    }
+
 
     res
         .status(200)
@@ -153,11 +133,16 @@ const getChannelVideos = asyncHandler(async (req, res) => {
     ])
 
 
+    if(!videos) {
+        throw new ApiError("Something went wrong", 400)
+    }
+
+
 
     return res
         .status(200)
         .json(
-            new ApiResponse(200, videos, "Videos successfully fetched"))
+            new ApiResponse(200, videos[0], "Videos successfully fetched"))
 })
 
 export {
