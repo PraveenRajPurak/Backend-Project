@@ -18,7 +18,6 @@ const getChannelStats = asyncHandler(async (req, res) => {
     }
 
 
-
     const info = await User.aggregate([
         {
             $match: {

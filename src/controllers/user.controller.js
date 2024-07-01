@@ -94,8 +94,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
         new ApiResponse(201, "User created successfully", Createduser)
     )
 
-
-
 })
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -119,7 +117,6 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!validPassword) {
         throw new ApiError(400, "Invalid credentials");
     }
-
 
     const loggedInUser = await User.findById(user._id).select(
         "-password -refreshToken"
@@ -211,7 +208,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const { accessToken, newrefreshtoken } = await generateAccessAndRefressToken(user._id)
 
-
     const options = {
         httpOnly: true,
         secure: true
@@ -277,13 +273,17 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     const { fullname, email } = req.body;
 
     if (!fullname || !email) {
+
         throw new ApiError(400, "All fields are required");
+
     }
 
     const user = await User.findById(req.user?._id);
 
     if (!user) {
+
         throw new ApiError(400, "User not found");
+    
     }
 
     const updateduser = await User.findByIdAndUpdate(user._id,
@@ -439,9 +439,9 @@ const showuserProfile = asyncHandler(async (req, res) => {
     //First we may use match to shorten the number of docs to look for.
     //Then we can use lookup to perform join operations.
     //Then we can add results of special operations (carried out using the various operation methods) using addField operation.
-   
+
     // **IMPORTANT : aggregation always returns array and mostly we'd require only one document.**
-   
+
     if (!userProfile?.length) {
         throw new ApiError(400, "User not found");
     }
@@ -455,7 +455,7 @@ const showuserProfile = asyncHandler(async (req, res) => {
 })
 
 const showWatchHistory = asyncHandler(async (req, res) => {
-    
+
     const user = await User.aggregate(
         [
             {
@@ -469,28 +469,28 @@ const showWatchHistory = asyncHandler(async (req, res) => {
                     localField: "watchHistory",
                     foreignField: "_id",
                     as: "watchHistory",
-                    pipeline:[
+                    pipeline: [
                         {
-                            $lookup : {
-                                from : "users",
-                                localField : "owner",
-                                foreignField : "_id",
-                                as : "owner",
-                                pipeline : [
+                            $lookup: {
+                                from: "users",
+                                localField: "owner",
+                                foreignField: "_id",
+                                as: "owner",
+                                pipeline: [
                                     {
-                                        $project : {
-                                            _id : 1,
+                                        $project: {
+                                            _id: 1,
                                             fullName: 1,
-                                            avatar : 1,
+                                            avatar: 1,
                                         }
                                     }
                                 ]
                             }
                         },
                         {
-                            $addFields : {
-                                owner : {
-                                    $first : "$owner"
+                            $addFields: {
+                                owner: {
+                                    $first: "$owner"
                                 }
                             }
                         }
@@ -506,8 +506,8 @@ const showWatchHistory = asyncHandler(async (req, res) => {
     }
 
     return res
-    .status(200)
-    .json(new ApiResponse(200, user[0], "Watch History fetched successfully."))
+        .status(200)
+        .json(new ApiResponse(200, user[0], "Watch History fetched successfully."))
 })
 
 export {

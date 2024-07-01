@@ -9,9 +9,16 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const {videoId} = req.params
     const {page = 1, limit = 10} = req.query
 
-    const videoComments = await Comment.find({
-        video : videoId
+    const videoComments = await Comment.aggregate({
+        $match : {video : videoId}
     })
+
+    const options = {
+        page : parseInt(page,10),
+        limit : parseInt(limit,10)
+    }
+
+    const comments = await Comment.aggregatePaginate(videoComments, options)
 
     if(!videoComments) {
         throw new ApiError("No comments found", 404)
