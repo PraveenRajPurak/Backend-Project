@@ -376,10 +376,22 @@ const showuserProfile = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Username not found");
     }
 
-    const userProfile = User.aggregate([
+    const myId = req.user._id
+
+    console.log("My Id : ", myId);
+
+    console.log("Username : ", username);
+
+    const user = await User.findOne({
+        username: username?.toLowerCase()
+    }).select("-password")
+
+    console.log("User's name : ", user.fullname);
+
+    const userProfile = await User.aggregate([
         {
             $match: {
-                username: username?.toLowerCase()
+                _id: new mongoose.Types.ObjectId(user?._id)
             }
         },
         {
@@ -409,7 +421,7 @@ const showuserProfile = asyncHandler(async (req, res) => {
                 isSubscribed: {
                     $cond: {
                         if: {
-                            $in: [req.user?._id, "$subscribers.subscriber"]
+                            $in: [new mongoose.Types.ObjectId(myId) , "$Subscribers.subscriber"]
                         },
                         then: true,
                         else: false
@@ -421,15 +433,16 @@ const showuserProfile = asyncHandler(async (req, res) => {
             $project: {
                 fullName: 1,
                 username: 1,
-                subscribersCount: 1,
-                channelsSubscribedToCount: 1,
+                userSubscriptionsCount: 1,
+                subcriberCount: 1,
                 isSubscribed: 1,
                 avatar: 1,
                 coverImage: 1,
                 email: 1
-
             }
         }])
+
+    console.log("User Profile : ", userProfile);
 
     //I got terribly confused about the concept of aggregation pipeline.
     //Then i studied it in depth and found out how it works.
@@ -460,7 +473,7 @@ const showWatchHistory = asyncHandler(async (req, res) => {
         [
             {
                 $match: {
-                    _id: mongoose.Types.ObjectId(req.user._id)
+                    _id: new mongoose.Types.ObjectId(req.user._id)
                 }
             },
             {
